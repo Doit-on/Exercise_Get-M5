@@ -25,6 +25,16 @@
 
 ---
 
+## 🔗 การเชื่อมต่อระบบคลาวด์ (Cloud Database)
+- **Google Sheets Database**: `TWP_GetInvolved_M5_Database`
+- **Google Apps Script Web App URL**:
+  ```
+  https://script.google.com/macros/s/AKfycbzEQrpPWnOQadlAw29jcL1TJtZibzn7PWDXgkYEg_By6wLQVEsRf1qUCSj1O0j2nhUV/exec
+  ```
+  *สถานะ: ออนไลน์พร้อมใช้งาน (Ping Verified 100%)*
+
+---
+
 ## 📂 โครงสร้างไฟล์ในโครงการ
 ```
 สรุปคลิป แบบฝึกหัด M.5/
