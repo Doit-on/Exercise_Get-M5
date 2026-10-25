@@ -5,17 +5,28 @@
  * เวอร์ชัน 2.0 (High School University-Prep Edition & Robust Safe-Sync)
  * ฐานข้อมูล Google Sheets: TWP_GetInvolved_M5_Database
  * =========================================================================
+ * 
+ * สถาปัตยกรรมระบบและการป้องกันข้อผิดพลาดที่ถอดบทเรียนจาก ม.1 - ม.4:
+ * 1. LockService: ล็อคสเปรดชีตชั่วคราวขณะเขียนข้อมูล ป้องกันข้อมูลชนกัน (Race Conditions) จากนักเรียนส่งพร้อมกัน
+ * 2. Text Formatting Guard: บังคับคอลัมน์รหัสนักเรียนเป็นรูปแบบข้อความ (@) ป้องกันศูนย์นำหน้าหาย
+ * 3. Case-Insensitive & Sanitized Keys: อีเมลถูกแปลงเป็น .trim().toLowerCase() ทุกจุด
+ * 4. Auto-Schema Self-Healing: หากชีตหรือหัวคอลัมน์ยังไม่ครบ ระบบจะสร้างและเติมให้อัตโนมัติ ไม่เกิด Error ขัดข้อง
+ * 5. CORS & JSON Delivery: รองรับการร้องขอข้ามโดเมนจาก GitHub Pages และ Localhost อย่างเสถียร
+ * =========================================================================
  */
 
-// คัดลอกโค้ดนี้ไปวางใน Apps Script (Extensions > Apps Script) ใน Google Sheets TWP_GetInvolved_M5_Database
-
+// ชื่อชีตหลักในระบบ
 const SHEET_STUDENTS = "Students_DB";
 const SHEET_NAME_BASE = "Name_base";
 const SHEET_LOGIN_LOGS = "Login_Logs";
 const SHEET_SCORES = "Scores_Log";
 const SHEET_CERTS = "Certificates";
 const SHEET_CONFIG = "Teacher_Config";
+const SHEET_QUESTIONS = "Questions_Feedback";
 
+/**
+ * เพิ่มเมนูพิเศษบน Google Sheets อัตโนมัติเมื่อเปิดชีต
+ */
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('🎓 ระบบ TWP ม.5')
@@ -24,12 +35,17 @@ function onOpen() {
     .addToUi();
 }
 
+/**
+ * ฟังก์ชันสร้างและจัดรูปแบบตารางทั้งหมดอัตโนมัติ (รันครั้งแรกเมื่อติดตั้ง)
+ */
 function setupAllSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 1. ชีต Students_DB
+  // 1. ชีต Students_DB (ฐานข้อมูลนักเรียน ม.5)
   let studentSheet = ss.getSheetByName(SHEET_STUDENTS);
-  if (!studentSheet) studentSheet = ss.insertSheet(SHEET_STUDENTS);
+  if (!studentSheet) {
+    studentSheet = ss.insertSheet(SHEET_STUDENTS);
+  }
   studentSheet.clear();
   const studentHeaders = [
     "Student ID", "ชื่อ-นามสกุล", "โรงเรียน", "ระดับชั้น", "ห้อง", 
@@ -37,9 +53,10 @@ function setupAllSheets() {
   ];
   studentSheet.appendRow(studentHeaders);
   formatHeaderRow(studentSheet, "#1D1D1F", "#FFFFFF");
-  studentSheet.getRange("A:A").setNumberFormat("@");
-  studentSheet.getRange("F:F").setNumberFormat("@");
+  studentSheet.getRange("A:A").setNumberFormat("@"); // บังคับ Text Format รหัส นร.
+  studentSheet.getRange("F:F").setNumberFormat("@"); // บังคับ Text Format อีเมล
 
+  // ตัวอย่างข้อมูลนักเรียน ม.5 ตั้งต้น
   const sampleStudents = [
     ["STD-M5-001", "ณภัทร วรเดชสกุล", "โรงเรียนเตรียมอุดมศึกษา", "ม.5", "1", "naphat.m5@gmail.com", "m5pass123", "Active", new Date()],
     ["STD-M5-002", "พิมพิชญา ศิริวัฒนา", "โรงเรียนสาธิต มศว ปทุมวัน", "ม.5", "2", "pimpichaya.m5@gmail.com", "m5pass123", "Active", new Date()],
@@ -47,9 +64,11 @@ function setupAllSheets() {
   ];
   sampleStudents.forEach(row => studentSheet.appendRow(row));
 
-  // 2. ชีต Name_base
+  // 2. ชีต Name_base (ดัชนี Auto-lookup)
   let nameSheet = ss.getSheetByName(SHEET_NAME_BASE);
-  if (!nameSheet) nameSheet = ss.insertSheet(SHEET_NAME_BASE);
+  if (!nameSheet) {
+    nameSheet = ss.insertSheet(SHEET_NAME_BASE);
+  }
   nameSheet.clear();
   nameSheet.appendRow(["Student ID", "ชื่อ-นามสกุล", "โรงเรียน", "ระดับชั้น", "อีเมลอ้างอิง"]);
   formatHeaderRow(nameSheet, "#3A3A3C", "#FFFFFF");
@@ -58,16 +77,20 @@ function setupAllSheets() {
     nameSheet.appendRow([s[0], s[1], s[2], s[3], s[5]]);
   });
 
-  // 3. ชีต Login_Logs
+  // 3. ชีต Login_Logs (ประวัติการเข้าใช้งาน)
   let logSheet = ss.getSheetByName(SHEET_LOGIN_LOGS);
-  if (!logSheet) logSheet = ss.insertSheet(SHEET_LOGIN_LOGS);
+  if (!logSheet) {
+    logSheet = ss.insertSheet(SHEET_LOGIN_LOGS);
+  }
   logSheet.clear();
   logSheet.appendRow(["Timestamp", "อีเมล", "ชื่อ-นามสกุล", "โรงเรียน", "สถานะการล็อกอิน", "User Agent / Device"]);
   formatHeaderRow(logSheet, "#48484A", "#FFFFFF");
 
-  // 4. ชีต Scores_Log
+  // 4. ชีต Scores_Log (บันทึกคะแนนละเอียด)
   let scoreSheet = ss.getSheetByName(SHEET_SCORES);
-  if (!scoreSheet) scoreSheet = ss.insertSheet(SHEET_SCORES);
+  if (!scoreSheet) {
+    scoreSheet = ss.insertSheet(SHEET_SCORES);
+  }
   scoreSheet.clear();
   const scoreHeaders = [
     "Timestamp", "Student ID", "อีเมล", "ชื่อ-นามสกุล", "โรงเรียน", "ห้อง",
@@ -77,9 +100,11 @@ function setupAllSheets() {
   formatHeaderRow(scoreSheet, "#0071E3", "#FFFFFF");
   scoreSheet.getRange("B:B").setNumberFormat("@");
 
-  // 5. ชีต Certificates
+  // 5. ชีต Certificates (ทะเบียนเกียรติบัตร)
   let certSheet = ss.getSheetByName(SHEET_CERTS);
-  if (!certSheet) certSheet = ss.insertSheet(SHEET_CERTS);
+  if (!certSheet) {
+    certSheet = ss.insertSheet(SHEET_CERTS);
+  }
   certSheet.clear();
   const certHeaders = [
     "Certificate ID", "Student ID", "ชื่อ-นามสกุล", "โรงเรียน", "ระดับชั้น", 
@@ -89,9 +114,11 @@ function setupAllSheets() {
   formatHeaderRow(certSheet, "#D97706", "#FFFFFF");
   certSheet.getRange("A:B").setNumberFormat("@");
 
-  // 6. ชีต Teacher_Config
+  // 6. ชีต Teacher_Config (การตั้งค่าระบบ)
   let configSheet = ss.getSheetByName(SHEET_CONFIG);
-  if (!configSheet) configSheet = ss.insertSheet(SHEET_CONFIG);
+  if (!configSheet) {
+    configSheet = ss.insertSheet(SHEET_CONFIG);
+  }
   configSheet.clear();
   configSheet.appendRow(["Key", "Value", "คำอธิบาย"]);
   formatHeaderRow(configSheet, "#6B7280", "#FFFFFF");
@@ -104,10 +131,27 @@ function setupAllSheets() {
   ];
   defaultConfigs.forEach(c => configSheet.appendRow(c));
 
+  // 7. ชีต Questions_Feedback (กล่องข้อสงสัยและคำถามจากนักเรียน)
+  let qSheet = ss.getSheetByName(SHEET_QUESTIONS);
+  if (!qSheet) {
+    qSheet = ss.insertSheet(SHEET_QUESTIONS);
+  }
+  qSheet.clear();
+  const qHeaders = [
+    "Timestamp", "Question ID", "Student ID", "ชื่อ-นามสกุล", "อีเมล", 
+    "ห้อง", "บทเรียน (Unit)", "ส่วน (Part)", "หมวดหมู่ (Topic)", "ข้อความข้อสงสัย (Message)", "สถานะการตอบ"
+  ];
+  qSheet.appendRow(qHeaders);
+  formatHeaderRow(qSheet, "#7C3AED", "#FFFFFF");
+  qSheet.getRange("B:C").setNumberFormat("@");
+
   SpreadsheetApp.flush();
-  return { status: "success", message: "สร้างและจัดรูปแบบโครงสร้างชีต ม.5 ครบทั้ง 6 แผ่นงานสำเร็จแล้ว" };
+  return { status: "success", message: "สร้างและจัดรูปแบบโครงสร้างชีต ม.5 ครบทั้ง 7 แผ่นงานสำเร็จแล้ว" };
 }
 
+/**
+ * จัดรูปแบบหัวตารางให้สวยงามคมชัดสไตล์ Minimalist
+ */
 function formatHeaderRow(sheet, bgColor, textColor) {
   const header = sheet.getRange(1, 1, 1, sheet.getLastColumn());
   header.setBackground(bgColor);
@@ -119,8 +163,12 @@ function formatHeaderRow(sheet, bgColor, textColor) {
   sheet.setFrozenRows(1);
 }
 
+/**
+ * Handle HTTP GET Requests
+ */
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || "ping";
+  
   if (action === "ping") {
     return createJsonResponse({
       status: "success",
@@ -130,28 +178,51 @@ function doGet(e) {
       timestamp: new Date().toISOString()
     });
   }
-  if (action === "getRoster") return getRosterData();
+
+  if (action === "getRoster") {
+    return getRosterData();
+  }
+
   if (action === "lookupStudent") {
     const email = (e.parameter.email || "").trim().toLowerCase();
     return lookupStudentProgress(email);
   }
+
   return createJsonResponse({ status: "error", message: "Unknown action" });
 }
 
+/**
+ * Handle HTTP POST Requests (Safe-Sync with LockService)
+ */
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
+    // รอคิวไม่เกิน 10 วินาที ป้องกันข้อมูลชนกัน
     lock.waitLock(10000);
+
     let data;
     try {
       data = JSON.parse(e.postData.contents);
     } catch (err) {
       data = e.parameter;
     }
+
     const action = data.action || "submitScore";
-    if (action === "submitScore") return recordStudentScore(data);
-    if (action === "loginLog") return logStudentLogin(data);
+
+    if (action === "submitScore") {
+      return recordStudentScore(data);
+    }
+
+    if (action === "submitQuestion") {
+      return recordStudentQuestion(data);
+    }
+
+    if (action === "loginLog") {
+      return logStudentLogin(data);
+    }
+
     return createJsonResponse({ status: "error", message: "Action not supported" });
+
   } catch (error) {
     return createJsonResponse({ status: "error", message: error.toString() });
   } finally {
@@ -159,6 +230,9 @@ function doPost(e) {
   }
 }
 
+/**
+ * บันทึกคะแนนนักเรียนลงในชีต Scores_Log อย่างปลอดภัย
+ */
 function recordStudentScore(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let scoreSheet = ss.getSheetByName(SHEET_SCORES);
@@ -194,6 +268,9 @@ function recordStudentScore(data) {
   });
 }
 
+/**
+ * บันทึกประวัติการล็อกอิน
+ */
 function logStudentLogin(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let logSheet = ss.getSheetByName(SHEET_LOGIN_LOGS);
@@ -201,6 +278,7 @@ function logStudentLogin(data) {
     setupAllSheets();
     logSheet = ss.getSheetByName(SHEET_LOGIN_LOGS);
   }
+
   logSheet.appendRow([
     new Date(),
     data.email || "-",
@@ -209,9 +287,47 @@ function logStudentLogin(data) {
     data.status || "Success",
     data.device || "Browser"
   ]);
+
   return createJsonResponse({ status: "success", message: "Login logged" });
 }
 
+/**
+ * บันทึกข้อสงสัยและคำถามจากนักเรียนลงในชีต Questions_Feedback
+ */
+function recordStudentQuestion(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let qSheet = ss.getSheetByName(SHEET_QUESTIONS);
+  if (!qSheet) {
+    setupAllSheets();
+    qSheet = ss.getSheetByName(SHEET_QUESTIONS);
+  }
+
+  const timestamp = new Date();
+  const qId = String(data.id || ("Q-" + Date.now())).trim();
+  const studentId = String(data.studentId || "GUEST").trim();
+  const name = String(data.studentName || "นักเรียนทั่วไป").trim();
+  const email = String(data.email || "").trim().toLowerCase();
+  const room = String(data.room || "-").trim();
+  const unit = String(data.unit || "-").trim();
+  const part = String(data.part || "-").trim();
+  const topic = String(data.topic || "-").trim();
+  const message = String(data.message || "").trim();
+  const status = "รอคุณครูตอบ";
+
+  qSheet.appendRow([
+    timestamp, qId, studentId, name, email, room, unit, part, topic, message, status
+  ]);
+
+  return createJsonResponse({
+    status: "success",
+    message: "บันทึกข้อสงสัยของนักเรียนลงในชีตเรียบร้อยแล้ว",
+    questionId: qId
+  });
+}
+
+/**
+ * ดึงข้อมูลนักเรียนทั้งหมดในระบบ
+ */
 function getRosterData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_STUDENTS);
@@ -230,11 +346,16 @@ function getRosterData() {
       status: rows[i][7]
     });
   }
+
   return createJsonResponse({ status: "success", data: students });
 }
 
+/**
+ * ค้นหาประวัตินักเรียนรายบุคคล
+ */
 function lookupStudentProgress(email) {
   if (!email) return createJsonResponse({ status: "error", message: "Email required" });
+
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const scoreSheet = ss.getSheetByName(SHEET_SCORES);
   if (!scoreSheet) return createJsonResponse({ status: "error", message: "Scores sheet not found" });
@@ -259,14 +380,21 @@ function lookupStudentProgress(email) {
       }
     }
   }
+
   return createJsonResponse({ status: "success", email: email, progress: units });
 }
 
+/**
+ * Helper ส่งค่า JSON Response
+ */
 function createJsonResponse(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/**
+ * คำนวณสรุปสถิติ
+ */
 function refreshSummaryStats() {
   SpreadsheetApp.getActiveSpreadsheet().toast("อัปเดตสถิติเรียบร้อยแล้ว", "สำเร็จ", 3);
 }

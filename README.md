@@ -18,8 +18,13 @@
 5. **Progressive E-Certificate Engine**:
    - เรนเดอร์บน High-DPI Canvas 2X พร้อมระบบ **Unicode Grapheme Cluster Regex (`/\P{M}\p{M}*/gu`)** ขจัดปัญหาสระลอยและวรรณยุกต์ขาดอย่างถาวร
    - ปลดล็อกตัวอักษรชื่อตามความก้าวหน้าทีละ 25% (0%, 25%, 50%, 75%, 100% พร้อมตราประทับทองคำ)
-6. **Teacher Portal & Cloud Database**:
+6. **Aggregate Score Pop-up Modal**:
+   - หน้าต่าง Pop-up สรุปคะแนนรวมสไตล์ Apple Glassmorphism แสดงคะแนนรวม, สัดส่วนร้อยละ, ป้ายประเมินระดับความสามารถ, และตารางวิเคราะห์ข้อที่ถูก/ผิด/เว้นไว้
+7. **Student Help Desk & Question Box**:
+   - กล่องให้นักเรียนส่งข้อสงสัยหรือปัญหาถึงคุณครู พร้อมบันทึกลงในระบบคุณครู (Teacher Inbox) และ Google Sheets
+8. **Teacher Portal & Cloud Database**:
    - ระบบควบคุมคุณครูผ่านรหัสผ่าน PIN ป้องกันรหัสผ่านรั่วไหล
+   - ตรวจสอบคำถามและข้อสงสัยของนักเรียนรายบุคคลในกล่องข้อความ
    - นำเข้ารายชื่อนักเรียนด้วยไฟล์ Excel (.xlsx) / CSV ผ่าน SheetJS
    - รองรับ Google Apps Script Web App พร้อม `LockService` ป้องกันข้อมูลชนกัน
 

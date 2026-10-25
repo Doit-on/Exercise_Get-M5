@@ -22,6 +22,7 @@ const SHEET_LOGIN_LOGS = "Login_Logs";
 const SHEET_SCORES = "Scores_Log";
 const SHEET_CERTS = "Certificates";
 const SHEET_CONFIG = "Teacher_Config";
+const SHEET_QUESTIONS = "Questions_Feedback";
 
 /**
  * เพิ่มเมนูพิเศษบน Google Sheets อัตโนมัติเมื่อเปิดชีต
@@ -130,8 +131,22 @@ function setupAllSheets() {
   ];
   defaultConfigs.forEach(c => configSheet.appendRow(c));
 
+  // 7. ชีต Questions_Feedback (กล่องข้อสงสัยและคำถามจากนักเรียน)
+  let qSheet = ss.getSheetByName(SHEET_QUESTIONS);
+  if (!qSheet) {
+    qSheet = ss.insertSheet(SHEET_QUESTIONS);
+  }
+  qSheet.clear();
+  const qHeaders = [
+    "Timestamp", "Question ID", "Student ID", "ชื่อ-นามสกุล", "อีเมล", 
+    "ห้อง", "บทเรียน (Unit)", "ส่วน (Part)", "หมวดหมู่ (Topic)", "ข้อความข้อสงสัย (Message)", "สถานะการตอบ"
+  ];
+  qSheet.appendRow(qHeaders);
+  formatHeaderRow(qSheet, "#7C3AED", "#FFFFFF");
+  qSheet.getRange("B:C").setNumberFormat("@");
+
   SpreadsheetApp.flush();
-  return { status: "success", message: "สร้างและจัดรูปแบบโครงสร้างชีต ม.5 ครบทั้ง 6 แผ่นงานสำเร็จแล้ว" };
+  return { status: "success", message: "สร้างและจัดรูปแบบโครงสร้างชีต ม.5 ครบทั้ง 7 แผ่นงานสำเร็จแล้ว" };
 }
 
 /**
@@ -196,6 +211,10 @@ function doPost(e) {
 
     if (action === "submitScore") {
       return recordStudentScore(data);
+    }
+
+    if (action === "submitQuestion") {
+      return recordStudentQuestion(data);
     }
 
     if (action === "loginLog") {
@@ -270,6 +289,40 @@ function logStudentLogin(data) {
   ]);
 
   return createJsonResponse({ status: "success", message: "Login logged" });
+}
+
+/**
+ * บันทึกข้อสงสัยและคำถามจากนักเรียนลงในชีต Questions_Feedback
+ */
+function recordStudentQuestion(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let qSheet = ss.getSheetByName(SHEET_QUESTIONS);
+  if (!qSheet) {
+    setupAllSheets();
+    qSheet = ss.getSheetByName(SHEET_QUESTIONS);
+  }
+
+  const timestamp = new Date();
+  const qId = String(data.id || ("Q-" + Date.now())).trim();
+  const studentId = String(data.studentId || "GUEST").trim();
+  const name = String(data.studentName || "นักเรียนทั่วไป").trim();
+  const email = String(data.email || "").trim().toLowerCase();
+  const room = String(data.room || "-").trim();
+  const unit = String(data.unit || "-").trim();
+  const part = String(data.part || "-").trim();
+  const topic = String(data.topic || "-").trim();
+  const message = String(data.message || "").trim();
+  const status = "รอคุณครูตอบ";
+
+  qSheet.appendRow([
+    timestamp, qId, studentId, name, email, room, unit, part, topic, message, status
+  ]);
+
+  return createJsonResponse({
+    status: "success",
+    message: "บันทึกข้อสงสัยของนักเรียนลงในชีตเรียบร้อยแล้ว",
+    questionId: qId
+  });
 }
 
 /**
