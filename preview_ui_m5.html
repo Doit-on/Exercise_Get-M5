@@ -574,51 +574,93 @@
   <!-- 4. MODALS & POP-UPS (Apple Responsive)     -->
   <!-- ========================================== -->
 
-  <!-- Modal 1: Student Login / Switch Account -->
-  <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 hairline-border shadow-apple-depth max-h-[90vh] overflow-y-auto space-y-6">
+  <!-- Modal 1: Student Login & Certificate Registration -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-md p-4 transition-all">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 hairline-border shadow-apple-depth max-h-[92vh] overflow-y-auto space-y-5">
       <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-        <div class="flex items-center space-x-2">
-          <i class="ph-bold ph-user-circle text-apple-accent text-2xl"></i>
-          <h3 class="font-bold text-base text-apple-textPrimary">เข้าสู่ระบบนักเรียน ม.5</h3>
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-blue-50 text-apple-accent flex items-center justify-center text-xl shadow-apple-sm">
+            <i class="ph-bold ph-identification-card"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-apple-textPrimary">เข้าสู่ระบบนักเรียน ม.5 (Get INVOLVED!)</h3>
+            <p class="text-xs text-apple-textSecondary">ใช้อีเมลที่สมัครไว้ และชื่อ-นามสกุลจริงเพื่อออกเกียรติบัตร</p>
+          </div>
         </div>
-        <button onclick="toggleAuthModal()" class="text-gray-400 hover:text-apple-textPrimary">
+        <button onclick="toggleAuthModal()" class="text-gray-400 hover:text-apple-textPrimary p-1 rounded-full hover:bg-gray-100 transition">
           <i class="ph-bold ph-x text-lg"></i>
         </button>
       </div>
 
+      <!-- Prominent E-Certificate Notice Banner -->
+      <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-50/90 via-orange-50/80 to-blue-50/90 border border-amber-200/90 space-y-1.5 shadow-sm">
+        <div class="flex items-center space-x-2 text-amber-800 font-bold text-xs">
+          <i class="ph-bold ph-certificate text-base text-amber-600"></i>
+          <span>สำคัญมากสำหรับการออกเกียรติบัตร (E-Certificate)</span>
+        </div>
+        <p class="text-[11px] text-gray-700 leading-relaxed">
+          กรุณาใช้ <strong>อีเมลที่สมัครไว้</strong> และระบุ <strong>ชื่อ-นามสกุลเต็มภาษาไทยจริง</strong> (รวมคำนำหน้า เช่น <em>นายณภัทร วรเดชสกุล</em> หรือ <em>นางสาวพิมพิชญา ศิริวัฒนา</em>) ระบบจะนำชื่อนี้ไปประมวลผลและพิมพ์ลงบน <strong>เกียรติบัตรอิเล็กทรอนิกส์อย่างเป็นทางการ</strong> เมื่อทำแบบฝึกหัดผ่านเกณฑ์
+        </p>
+      </div>
+
       <div class="space-y-4 text-xs">
+        <!-- 1. Registered Email Input with Live Lookup -->
         <div>
-          <label class="block font-semibold text-apple-textPrimary mb-1">เลือกนักเรียนจากรายชื่อห้อง ม.5:</label>
-          <select id="modal-student-select" onchange="fillAuthFromSelect(this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 bg-white font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent">
-            <option value="">-- หรือพิมพ์กรอกเองด้านล่าง --</option>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-apple-textPrimary flex items-center gap-1">
+              <span>1. อีเมลนักเรียนที่สมัครไว้ (Student Email):</span>
+              <span class="text-red-500">*</span>
+            </label>
+            <span class="text-[10px] text-apple-accent font-semibold" id="modal-email-match-badge"></span>
+          </div>
+          <div class="relative">
+            <i class="ph-bold ph-envelope-simple absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+            <input type="email" id="modal-input-email" oninput="onStudentEmailInput(this.value)" placeholder="เช่น naphat.m5@gmail.com หรือ student@school.ac.th" class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent outline-none">
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1" id="modal-email-helper">
+            พิมพ์อีเมลที่ใช้สมัคร ระบบจะค้นหาประวัติการทำแบบฝึกหัดและข้อมูลเดิมให้อัตโนมัติ
+          </p>
+        </div>
+
+        <!-- 2. Full Name Input (For Certificate) -->
+        <div>
+          <label class="block font-bold text-apple-textPrimary mb-1">
+            <span>2. ชื่อ-นามสกุลเต็มภาษาไทย (พิมพ์ลงบนเกียรติบัตร):</span>
+            <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <i class="ph-bold ph-user absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+            <input type="text" id="modal-input-name" placeholder="เช่น นายณภัทร วรเดชสกุล (ระบุคำนำหน้าชื่อจริง)" class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 font-semibold text-apple-textPrimary focus:ring-2 focus:ring-apple-accent outline-none">
+          </div>
+          <span class="text-[10px] text-amber-700 italic block mt-1">
+            * โปรดหลีกเลี่ยงชื่อเล่นหรือนามแฝง เพื่อให้เกียรติบัตรถูกต้องตามมาตรฐานสถานศึกษา
+          </span>
+        </div>
+
+        <!-- 3. School & Room -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-apple-textPrimary mb-1">โรงเรียน:</label>
+            <input type="text" id="modal-input-school" placeholder="โรงเรียนเตรียมอุดมศึกษา" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-apple-textPrimary mb-1">ระดับชั้น & ห้อง (Room):</label>
+            <input type="text" id="modal-input-room" placeholder="ม.5/1" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent outline-none">
+          </div>
+        </div>
+
+        <!-- 4. Student ID -->
+        <div>
+          <label class="block font-semibold text-apple-textPrimary mb-1">รหัสนักเรียน (ถ้ามี หรือเว้นว่างให้ระบบออกให้):</label>
+          <input type="text" id="modal-input-id" placeholder="STD-M5-001 (ปล่อยว่างได้)" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-mono text-xs text-apple-textPrimary focus:ring-2 focus:ring-apple-accent outline-none">
+        </div>
+
+        <!-- Quick Select from Registered Roster -->
+        <div class="pt-2 border-t border-gray-100">
+          <label class="block font-semibold text-apple-textSecondary text-[11px] mb-1.5">หรือคลิกเลือกจากรายชื่อนักเรียนที่มีในระบบห้อง ม.5:</label>
+          <select id="modal-student-select" onchange="fillAuthFromSelect(this.value)" class="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/80 font-medium text-apple-textPrimary text-xs focus:ring-2 focus:ring-apple-accent">
+            <option value="">-- แตะเพื่อเลือกรายชื่อนักเรียนที่มีอยู่ --</option>
           </select>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-apple-textPrimary mb-1">ชื่อ-นามสกุล (ภาษาไทยตามบัตรประชาชน):</label>
-          <input type="text" id="modal-input-name" placeholder="เช่น นายณภัทร วรเดชสกุล" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent">
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-semibold text-apple-textPrimary mb-1">รหัสนักเรียน:</label>
-            <input type="text" id="modal-input-id" placeholder="STD-M5-001" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent">
-          </div>
-          <div>
-            <label class="block font-semibold text-apple-textPrimary mb-1">ห้อง (Classroom):</label>
-            <input type="text" id="modal-input-room" placeholder="ม.5/1" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent">
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-apple-textPrimary mb-1">อีเมลผู้เรียน (ใช้แยกบันทึกข้อมูล):</label>
-          <input type="email" id="modal-input-email" placeholder="student@school.ac.th" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent">
-        </div>
-
-        <div>
-          <label class="block font-semibold text-apple-textPrimary mb-1">โรงเรียน:</label>
-          <input type="text" id="modal-input-school" placeholder="โรงเรียนเตรียมอุดมศึกษา" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 font-medium text-apple-textPrimary focus:ring-2 focus:ring-apple-accent">
         </div>
       </div>
 
@@ -626,8 +668,9 @@
         <button onclick="toggleAuthModal()" class="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-apple-textPrimary">
           ยกเลิก
         </button>
-        <button onclick="saveStudentAuth()" class="flex-1 py-2.5 rounded-xl bg-apple-accent hover:bg-apple-accentHover text-white text-xs font-bold shadow-apple-btn-primary">
-          ยืนยันเข้าสู่ระบบ
+        <button onclick="saveStudentAuth()" class="flex-1 py-2.5 rounded-xl bg-apple-accent hover:bg-apple-accentHover text-white text-xs font-bold shadow-apple-btn-primary flex items-center justify-center space-x-1.5">
+          <i class="ph-bold ph-sign-in text-sm"></i>
+          <span>ยืนยันเข้าสู่ระบบ & ออกเกียรติบัตร</span>
         </button>
       </div>
     </div>
@@ -1155,46 +1198,109 @@
       });
     }
 
+    function onStudentEmailInput(email) {
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const badge = document.getElementById('modal-email-match-badge');
+      const helper = document.getElementById('modal-email-helper');
+      if (!cleanEmail) {
+        if (badge) badge.textContent = '';
+        if (helper) helper.textContent = 'พิมพ์อีเมลที่ใช้สมัคร ระบบจะค้นหาประวัติการทำแบบฝึกหัดและข้อมูลเดิมให้อัตโนมัติ';
+        return;
+      }
+
+      const match = studentsDB.find(s => (s.email || '').trim().toLowerCase() === cleanEmail);
+      if (match) {
+        if (badge) {
+          badge.textContent = `✓ พบข้อมูล: ${match.name}`;
+          badge.className = 'text-[10px] text-green-600 font-bold';
+        }
+        if (helper) {
+          helper.textContent = `เชื่อมโยงข้อมูล ${match.name} (${match.room} • ${match.school}) เพื่อออกเกียรติบัตร`;
+        }
+        // Auto-fill existing student fields
+        document.getElementById('modal-input-name').value = match.name;
+        document.getElementById('modal-input-school').value = match.school;
+        document.getElementById('modal-input-room').value = match.room;
+        document.getElementById('modal-input-id').value = match.id;
+      } else {
+        if (badge) {
+          badge.textContent = '✨ ผู้เรียนใหม่ / เข้าสู่ระบบครั้งแรก';
+          badge.className = 'text-[10px] text-blue-600 font-semibold';
+        }
+        if (helper) {
+          helper.textContent = 'อีเมลนี้ยังไม่มีในระบบ โปรดระบุชื่อ-นามสกุลจริงภาษาไทยด้านล่างเพื่อออกเกียรติบัตร';
+        }
+      }
+    }
+
     function fillAuthFromSelect(studentId) {
       if (!studentId) return;
       const s = studentsDB.find(x => x.id === studentId);
       if (!s) return;
+      document.getElementById('modal-input-email').value = s.email;
       document.getElementById('modal-input-name').value = s.name;
       document.getElementById('modal-input-id').value = s.id;
       document.getElementById('modal-input-room').value = s.room;
-      document.getElementById('modal-input-email').value = s.email;
       document.getElementById('modal-input-school').value = s.school;
+      onStudentEmailInput(s.email);
     }
 
     function saveStudentAuth() {
+      const email = (document.getElementById('modal-input-email').value || '').trim();
       const name = (document.getElementById('modal-input-name').value || '').trim();
       const id = (document.getElementById('modal-input-id').value || '').trim();
       const room = (document.getElementById('modal-input-room').value || '').trim();
-      const email = (document.getElementById('modal-input-email').value || '').trim();
       const school = (document.getElementById('modal-input-school').value || '').trim() || 'โรงเรียนในเครือ ทวพ.';
 
-      if (!name || !email) {
-        alert("กรุณากรอกชื่อ-นามสกุล และอีเมลให้ครบถ้วนเพื่อใช้ระบุตัวตนและบันทึกคะแนน");
+      if (!email) {
+        alert("⚠️ กรุณาระบุอีเมลนักเรียนที่สมัครไว้ เพื่อใช้ในการบันทึกคะแนนและเชื่อมโยงบัญชี");
+        document.getElementById('modal-input-email').focus();
         return;
       }
 
-      currentStudent = {
-        id: id || `STD-M5-${Math.floor(100 + Math.random() * 900)}`,
-        name: name,
-        school: school,
-        room: room || 'ม.5',
-        email: email.toLowerCase(),
-        isLoggedIn: true
-      };
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert("⚠️ รูปแบบอีเมลไม่ถูกต้อง กรุณาตรวจสอบอีเมลอีกครั้ง (เช่น student@gmail.com หรือ student@school.ac.th)");
+        document.getElementById('modal-input-email').focus();
+        return;
+      }
 
-      // Add to database if not exists
-      if (!studentsDB.some(s => s.email.toLowerCase() === currentStudent.email)) {
+      if (!name) {
+        alert("⚠️ กรุณากรอกชื่อ-นามสกุลเต็มภาษาไทย (เช่น นายณภัทร วรเดชสกุล หรือ นางสาวพิมพิชญา ศิริวัฒนา) เนื่องจากระบบจำเป็นต้องใช้ชื่อนี้ในการพิมพ์ลงบนเกียรติบัตรอย่างเป็นทางการ");
+        document.getElementById('modal-input-name').focus();
+        return;
+      }
+
+      const cleanEmail = email.toLowerCase();
+      let studentRecord = studentsDB.find(s => s.email.toLowerCase() === cleanEmail);
+
+      if (studentRecord) {
+        // Update existing student with current confirmed name & details for certificate
+        studentRecord.name = name;
+        studentRecord.school = school;
+        studentRecord.room = room || studentRecord.room || 'ม.5';
+        if (id) studentRecord.id = id;
+        currentStudent = { ...studentRecord, isLoggedIn: true };
+      } else {
+        // New student registration (first-time login)
+        currentStudent = {
+          id: id || `STD-M5-${Math.floor(100 + Math.random() * 900)}`,
+          name: name,
+          school: school,
+          room: room || 'ม.5/1',
+          email: cleanEmail,
+          isLoggedIn: true
+        };
         studentsDB.push(currentStudent);
-        localStorage.setItem('twp_m5_students_db', JSON.stringify(studentsDB));
         populateStudentModalSelect();
       }
 
+      localStorage.setItem('twp_m5_students_db', JSON.stringify(studentsDB));
       localStorage.setItem('twp_m5_active_student', JSON.stringify(currentStudent));
+
+      // Sync login log to Google Sheets Cloud
+      syncLoginToGoogleSheets(currentStudent);
+
       toggleAuthModal();
       updateStudentHeaderUI();
       renderCurriculumGrid();
@@ -1204,7 +1310,25 @@
       renderScoresTable();
       updateCertificateStatus();
       drawCertificateCanvas();
-      alert(`ยินดีต้อนรับ ${currentStudent.name} เข้าสู่ระบบแบบฝึกหัด Get INVOLVED! ม.5`);
+
+      alert(`🎉 ยินดีต้อนรับ ${currentStudent.name} เข้าสู่ระบบแบบฝึกหัด Get INVOLVED! ม.5\n\n• อีเมลผู้เรียน: ${currentStudent.email}\n• ชื่อบนเกียรติบัตร: "${currentStudent.name}"\n• โรงเรียน: ${currentStudent.school}`);
+    }
+
+    function syncLoginToGoogleSheets(student) {
+      if (!gasUrl || gasUrl.includes("example_m5")) return;
+      fetch(gasUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "loginLog",
+          email: student.email,
+          name: student.name,
+          school: student.school,
+          status: "Success (Verified for E-Cert)",
+          device: navigator.userAgent.includes("Mobile") ? "Mobile Device" : "Desktop Browser"
+        })
+      }).catch(err => console.warn("Login sync note:", err));
     }
 
     // -----------------------------------------------------------
@@ -1270,6 +1394,12 @@
     // Exercise Workspace Controller
     // -----------------------------------------------------------
     function startUnitExercise(unitId) {
+      if (!currentStudent || !currentStudent.isLoggedIn) {
+        if (confirm("🎓 เพื่อสะสมคะแนน และพิมพ์ชื่อจริงลงบนเกียรติบัตรออนไลน์ (E-Certificate)\n\nแนะนำให้เข้าสู่ระบบด้วยอีเมลที่สมัครไว้ และชื่อ-นามสกุลจริงของคุณก่อนเริ่มทำแบบฝึกหัด\n\nต้องการเข้าสู่ระบบตอนนี้หรือไม่?\n• กด [ตกลง / OK] เพื่อเข้าสู่ระบบ\n• กด [ยกเลิก / Cancel] เพื่อทดลองทำแบบผู้เรียนทั่วไป")) {
+          toggleAuthModal();
+          return;
+        }
+      }
       activeUnitId = unitId;
       activeSectionIdx = 0;
       document.getElementById('select-unit').value = unitId;
